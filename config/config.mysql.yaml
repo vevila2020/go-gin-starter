@@ -1,0 +1,34 @@
+server:
+  port: 8080
+  mode: debug
+  app_name: go_basic_framework_template
+
+database:
+  driver: mysql
+  host: localhost
+  port: 3306
+  username: root
+  password: root
+  database: myapp
+  ssl_mode: disable
+  time_zone: Asia%2FShanghai
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  enabled: false
+  host: localhost
+  port: 6379
+  password: ''
+  db: 0
+  pool_size: 10
+  min_idle_conns: 5
+
+log:
+  level: debug
+  filename: logs/app.log
+  max_size: 100
+  max_backups: 10
+  max_age: 30
+  compress: true
+  console: true
