@@ -10,16 +10,20 @@ import (
 	"syscall"
 	"time"
 
-	"go_basic_framework_template/internal/config"
-	"go_basic_framework_template/internal/database"
-	"go_basic_framework_template/internal/logger"
-	"go_basic_framework_template/internal/redis"
-	"go_basic_framework_template/internal/router"
+	"go-gin-starter/internal/config"
+	"go-gin-starter/internal/database"
+	"go-gin-starter/internal/logger"
+	"go-gin-starter/internal/redis"
+	"go-gin-starter/internal/router"
 
 	"github.com/gin-gonic/gin"
 )
 
-var configPath string
+var (
+	configPath string
+	Version    = "dev"
+	BuildTime  = "unknown"
+)
 
 func init() {
 	flag.StringVar(&configPath, "config", "config/config.yaml", "config file path")
@@ -59,12 +63,13 @@ func main() {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      r,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
 	}
 
+	logger.Infof("starting %s version=%s build=%s on port %d", cfg.Server.AppName, Version, BuildTime, cfg.Server.Port)
+
 	go func() {
-		logger.Infof("server starting on port %d", cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatalf("failed to start server: %v", err)
 		}
@@ -76,7 +81,7 @@ func main() {
 
 	logger.Info("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {

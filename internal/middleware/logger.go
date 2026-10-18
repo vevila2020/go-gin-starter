@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 
-	"go_basic_framework_template/internal/logger"
+	"go-gin-starter/internal/logger"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

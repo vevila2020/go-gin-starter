@@ -1,9 +1,15 @@
 server:
   port: 8080
-  mode: debug
-  app_name: go_basic_framework_template
+  mode: release
+  app_name: go-gin-starter
+  allowed_origins:
+    - "*"
+  read_timeout: 30
+  write_timeout: 30
+  request_timeout: 30
 
 database:
+  enabled: true
   driver: mysql
   host: localhost
   port: 3306
@@ -11,9 +17,10 @@ database:
   password: root
   database: myapp
   ssl_mode: disable
-  time_zone: Asia%2FShanghai
+  time_zone: Asia/Shanghai
   max_idle_conns: 10
   max_open_conns: 100
+  auto_migrate: true
 
 redis:
   enabled: false
@@ -25,7 +32,7 @@ redis:
   min_idle_conns: 5
 
 log:
-  level: debug
+  level: info
   filename: logs/app.log
   max_size: 100
   max_backups: 10

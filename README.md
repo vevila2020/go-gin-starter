@@ -1,336 +1,186 @@
-# Go Basic Framework Template
+# go-gin-starter
 
-基于 Gin 框架的企业级 Go 项目基础模板，开箱即用。
+基于 Gin 的 Go Web 服务开箱即用模板。适合单体服务、后台 API 和中小型业务系统。
 
 ## 特性
 
-- **数据库适配** - 支持 PostgreSQL（优选）/ MySQL，通过配置文件一键切换
-- **Redis 缓存** - 可选启用，支持连接池配置
-- **日志系统** - Zap + Lumberjack，支持文件切割、压缩、控制台输出
-- **统一响应** - JSON 格式 + 分页数据 + 文件流下载
-- **中间件** - CORS 跨域、请求日志、Panic 恢复、JWT 认证
-- **分层架构** - Handler → Service → Repository 标准三层
-- **工具包** - 丰富的通用工具函数库
-
-## 项目结构
-
-```
-go_basic_framework_template/
-├── cmd/
-│   └── server/
-│       └── main.go              # 主入口文件
-├── config/
-│   ├── config.yaml              # PostgreSQL 配置示例
-│   └── config.mysql.yaml        # MySQL 配置示例
-├── internal/                    # 私有应用代码
-│   ├── config/                  # 配置管理
-│   ├── database/                # 数据库连接
-│   ├── handler/                 # HTTP 处理器
-│   ├── logger/                  # 日志模块
-│   ├── middleware/              # 中间件
-│   ├── model/                   # 数据模型
-│   ├── redis/                   # Redis 缓存
-│   ├── repository/              # 数据访问层
-│   ├── response/                # 统一响应封装
-│   ├── router/                  # 路由配置
-│   └── service/                 # 业务逻辑层
-├── pkg/                         # 公共工具包
-│   ├── converter/               # 类型转换工具
-│   ├── hash/                    # 哈希加密工具
-│   ├── jwt/                     # JWT 认证工具
-│   ├── slice/                   # 切片工具
-│   ├── str/                     # 字符串工具
-│   ├── utils/                   # 通用工具
-│   └── validator/               # 验证工具
-├── logs/                        # 日志文件目录
-├── bin/                         # 编译输出
-├── Makefile                     # 构建脚本
-├── go.mod
-└── go.sum
-```
+- 默认零外部依赖启动，`/health` 与 `/ready` 可直接用于探针
+- PostgreSQL / MySQL 可切换，数据库可关闭，支持可选自动建表
+- Redis 可选启用，带连接池与超时
+- Zap + Lumberjack 日志，支持切割、压缩和双端输出
+- 统一响应、分页、文件下载
+- JWT 认证、CORS、请求日志、Panic 恢复、请求超时、简单限流
+- Handler → Service → Repository 三层结构
+- Dockerfile、docker-compose、Makefile、GitHub Template 就绪
 
 ## 快速开始
 
-### 环境要求
-
-- Go 1.22+
-- PostgreSQL 12+ / MySQL 8+
-- Redis 6+ (可选)
-
-### 安装依赖
+环境要求：Go 1.23+
 
 ```bash
 go mod tidy
+go run ./cmd/server -config config/config.yaml
 ```
 
-### 配置文件
+默认配置关闭数据库和 Redis，启动后可直接访问：
 
-编辑 `config/config.yaml`，配置数据库连接信息：
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/ready
+```
+
+预期响应：
+
+```json
+{"code":0,"message":"success","data":{"status":"ok"}}
+```
+
+## 用模板创建新项目
+
+GitHub 上建议把本仓库设为 Template repository，然后：
+
+```bash
+gh repo create my-service --template <owner>/go-gin-starter --private --clone
+cd my-service
+# 将 go.mod 中的 module 改为你的项目路径
+go mod tidy
+```
+
+非 GitHub 环境：
+
+```bash
+git clone --depth 1 https://github.com/<owner>/go-gin-starter.git my-service
+cd my-service
+rm -rf .git
+git init -b main
+git add .
+git commit -m "init from go-gin-starter"
+git remote add origin <your-repo-url>
+git push -u origin main
+```
+
+创建后记得修改：
+
+- `go.mod` 的 `module` 路径
+- `config/config.yaml` 的 `server.app_name`
+- `Makefile` 的 `APP_NAME`
+
+## 项目结构
+
+```text
+go-gin-starter/
+├── cmd/server/              # 入口
+├── config/                  # 配置示例
+├── internal/
+│   ├── config/              # 配置加载
+│   ├── database/            # GORM 初始化，可关闭
+│   ├── handler/             # HTTP 处理器
+│   ├── logger/              # Zap 日志
+│   ├── middleware/          # CORS、JWT、日志、恢复、超时、限流
+│   ├── model/               # 数据模型
+│   ├── redis/               # Redis 封装，可关闭
+│   ├── repository/          # 数据访问
+│   ├── response/            # 统一响应
+│   ├── router/              # 路由注册
+│   └── service/             # 业务逻辑
+├── pkg/                     # 框架无关工具包
+├── Dockerfile
+├── docker-compose.yml
+└── Makefile
+```
+
+## 配置说明
+
+默认 `config/config.yaml` 关闭数据库：
 
 ```yaml
-server:
-  port: 8080
-  mode: debug
-  app_name: go_basic_framework_template
-
 database:
-  driver: postgres # postgres 或 mysql
-  host: localhost
-  port: 5432
-  username: postgres
-  password: postgres
-  database: myapp
-  ssl_mode: disable
-  time_zone: Asia/Shanghai
-  max_idle_conns: 10
-  max_open_conns: 100
-
-redis:
-  enabled: false # 是否启用 Redis
-  host: localhost
-  port: 6379
-  password: ''
-  db: 0
-  pool_size: 10
-  min_idle_conns: 5
-
-log:
-  level: debug
-  filename: logs/app.log
-  max_size: 100 # MB
-  max_backups: 10
-  max_age: 30 # days
-  compress: true
-  console: true
+  enabled: false
 ```
 
-### 运行项目
+需要数据库时改为 `enabled: true`，并选择驱动：
+
+```yaml
+database:
+  enabled: true
+  driver: postgres   # postgres 或 mysql
+  auto_migrate: true # 仅建议开发和演示环境开启
+```
+
+本地依赖可启动：
 
 ```bash
-# 直接运行
-go run ./cmd/server
-
-# 或编译后运行
-go build -o bin/server ./cmd/server
-./bin/server
-
-# 使用 Makefile
-make run
+docker compose up -d postgres redis
 ```
 
-### 构建命令
+然后按需在配置中打开 `database.enabled` 和 `redis.enabled`。
 
-```bash
-make build        # 编译项目
-make run          # 运行项目
-make clean        # 清理构建产物
-make test         # 运行测试
-make lint         # 运行代码检查
-make fmt          # 格式化代码
-```
+## API 示例
 
-## API 接口
-
-### 健康检查
-
-| 方法 | 路径      | 说明     |
-| ---- | --------- | -------- |
-| GET  | `/health` | 健康检查 |
-| GET  | `/ready`  | 就绪检查 |
-
-### 用户管理（示例）
-
-| 方法   | 路径                | 说明     |
-| ------ | ------------------- | -------- |
-| POST   | `/api/v1/users`     | 创建用户 |
-| GET    | `/api/v1/users`     | 用户列表 |
-| GET    | `/api/v1/users/:id` | 用户详情 |
-| PUT    | `/api/v1/users/:id` | 更新用户 |
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/health` | 存活检查 |
+| GET | `/ready` | 就绪检查（数据库/Redis 已启用时探活） |
+| POST | `/api/v1/users` | 创建用户 |
+| GET | `/api/v1/users` | 用户列表 |
+| GET | `/api/v1/users/:id` | 用户详情 |
+| PUT | `/api/v1/users/:id` | 更新用户 |
 | DELETE | `/api/v1/users/:id` | 删除用户 |
 
-### 统一响应格式
+未启用数据库时，用户接口返回明确的 `database is disabled` 错误，不会导致服务崩溃。
 
-**成功响应**
+## 统一响应
 
 ```json
 {
   "code": 0,
   "message": "success",
-  "data": { ... }
+  "data": {}
 }
 ```
 
-**分页响应**
+分页：
 
 ```json
 {
   "code": 0,
   "message": "success",
   "data": {
-    "list": [ ... ],
-    "total": 100,
+    "list": [],
+    "total": 0,
     "page": 1,
     "page_size": 10
   }
 }
 ```
 
-**错误响应**
+## 安全与生产注意事项
 
-```json
-{
-  "code": 400,
-  "message": "bad request"
-}
+- 示例用户密码使用 bcrypt 哈希存储，生产环境仍建议结合密码强度策略和登录限流
+- `allowed_origins` 默认 `*`，生产环境应改为明确域名
+- `auto_migrate` 只适合开发环境，生产建议使用独立迁移工具
+- 限流是单进程内存实现，多实例部署时应替换为 Redis 或网关限流
+- JWT 示例只校验 token 是否存在，正式项目需接入完整签名校验
+
+## 常用命令
+
+```bash
+make run
+make test
+make vet
+make build
+make docker
 ```
-
-## 工具包使用
-
-### 字符串工具 (pkg/str)
-
-```go
-import "go_basic_framework_template/pkg/str"
-
-str.IsEmpty("")                    // true
-str.IsBlank("  ")                  // true
-str.CamelToSnake("UserName")       // "user_name"
-str.SnakeToCamel("user_name")      // "userName"
-str.MaskPhone("13812345678")       // "138****5678"
-str.MaskEmail("test@example.com")  // "t***@example.com"
-```
-
-### 切片工具 (pkg/slice)
-
-```go
-import "go_basic_framework_template/pkg/slice"
-
-slice.Contains([]int{1, 2, 3}, 2)           // true
-slice.Unique([]int{1, 2, 2, 3})             // [1, 2, 3]
-slice.Chunk([]int{1, 2, 3, 4}, 2)           // [[1, 2], [3, 4]]
-slice.Map([]int{1, 2, 3}, func(i int) int { return i * 2 })  // [2, 4, 6]
-slice.Filter([]int{1, 2, 3}, func(i int) bool { return i > 1 })  // [2, 3]
-```
-
-### 类型转换 (pkg/converter)
-
-```go
-import "go_basic_framework_template/pkg/converter"
-
-converter.ToInt("123")           // 123, nil
-converter.ToInt64(123)           // 123, nil
-converter.ToFloat64("3.14")      // 3.14, nil
-converter.ToBool("true")         // true, nil
-converter.ToJSON(map[string]int{"a": 1})  // "{\"a\":1}", nil
-```
-
-### 验证工具 (pkg/validator)
-
-```go
-import "go_basic_framework_template/pkg/validator"
-
-validator.IsEmail("test@example.com")    // true
-validator.IsPhone("13812345678")         // true
-validator.IsIDCard("110101199001011234") // true
-validator.IsURL("https://example.com")   // true
-validator.IsIP("192.168.1.1")            // true
-validator.IsStrongPassword("Abc123!@")   // true
-```
-
-### 哈希工具 (pkg/hash)
-
-```go
-import "go_basic_framework_template/pkg/hash"
-
-hash.MD5String("hello")                    // "5d41402abc4b2a76b9719d911017c592"
-hash.SHA256String("hello")                 // "2cf24dba5..."
-hash.HashPassword("mypassword")           // "$2a$10$..." (bcrypt)
-hash.CheckPassword("mypassword", hashStr) // true
-```
-
-### JWT 工具 (pkg/jwt)
-
-```go
-import "go_basic_framework_template/pkg/jwt"
-import "time"
-
-j := jwt.NewJWT("secret-key", "myapp", time.Hour, time.Hour*24*7)
-
-// 生成 Token
-token, _ := j.GenerateToken(1, "username", "email@example.com")
-
-// 解析 Token
-claims, _ := j.ParseToken(token)
-// claims.UserID, claims.Username, claims.Email
-
-// 刷新 Token
-newToken, _ := j.RefreshToken(token)
-```
-
-### 通用工具 (pkg/utils)
-
-```go
-import "go_basic_framework_template/pkg/utils"
-
-utils.RandomString(16)           // "aBc123XyZ..."
-utils.RandomNumber(6)            // "123456"
-utils.Paginate(2, 10)            // offset=10, limit=10
-utils.If(true, "yes", "no")      // "yes"
-utils.Default(0, 100)            // 100
-utils.Default(50, 100)           // 50
-```
-
-## 中间件
-
-### CORS 跨域
-
-已内置 CORS 中间件，默认允许所有来源。可在 `internal/middleware/cors.go` 中修改配置。
-
-### 请求日志
-
-自动记录每个请求的方法、路径、状态码、耗时等信息。
-
-### Panic 恢复
-
-自动捕获 panic 并返回 500 错误，防止服务崩溃。
-
-### JWT 认证
-
-```go
-import "go_basic_framework_template/internal/middleware"
-
-// 需要认证的路由
-api.GET("/profile", middleware.AuthRequired(), handler.Profile)
-```
-
-## 扩展指南
-
-### 添加新的业务模块
-
-1. 在 `internal/model/` 创建数据模型
-2. 在 `internal/repository/` 创建数据访问层
-3. 在 `internal/service/` 创建业务逻辑层
-4. 在 `internal/handler/` 创建 HTTP 处理器
-5. 在 `internal/router/router.go` 注册路由
-
-### 添加新的中间件
-
-在 `internal/middleware/` 创建新的中间件文件，并在 `router.go` 中注册。
-
-### 添加新的工具函数
-
-在 `pkg/` 对应的工具包中添加函数，并添加注释说明。
 
 ## 技术栈
 
-- [Gin](https://github.com/gin-gonic/gin) - Web 框架
-- [GORM](https://gorm.io/) - ORM 框架
-- [Zap](https://github.com/uber-go/zap) - 日志库
-- [Lumberjack](https://github.com/natefinch/lumberjack) - 日志切割
-- [go-redis](https://github.com/redis/go-redis) - Redis 客户端
-- [jwt-go](https://github.com/golang-jwt/jwt) - JWT 认证
-- [validator](https://github.com/go-playground/validator) - 参数验证
-- [yaml](https://github.com/go-yaml/yaml) - YAML 解析
+- Gin
+- GORM（PostgreSQL / MySQL）
+- Redis (go-redis)
+- Zap + Lumberjack
+- validator
+- YAML
 
 ## License
 
-MIT License
+MIT

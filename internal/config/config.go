@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,12 +16,17 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port    int    `yaml:"port"`
-	Mode    string `yaml:"mode"`
-	AppName string `yaml:"app_name"`
+	Port           int      `yaml:"port"`
+	Mode           string   `yaml:"mode"`
+	AppName        string   `yaml:"app_name"`
+	AllowedOrigins []string `yaml:"allowed_origins"`
+	ReadTimeout    int      `yaml:"read_timeout"`
+	WriteTimeout   int      `yaml:"write_timeout"`
+	RequestTimeout int      `yaml:"request_timeout"`
 }
 
 type DatabaseConfig struct {
+	Enabled  bool   `yaml:"enabled"`
 	Driver   string `yaml:"driver"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
@@ -32,6 +38,8 @@ type DatabaseConfig struct {
 
 	MaxIdleConns int `yaml:"max_idle_conns"`
 	MaxOpenConns int `yaml:"max_open_conns"`
+
+	AutoMigrate bool `yaml:"auto_migrate"`
 }
 
 func (d *DatabaseConfig) DSN() string {
@@ -41,7 +49,7 @@ func (d *DatabaseConfig) DSN() string {
 			d.Host, d.Username, d.Password, d.Database, d.Port, d.SSLMode, d.TimeZone)
 	case "mysql":
 		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=%s",
-			d.Username, d.Password, d.Host, d.Port, d.Database, d.TimeZone)
+			d.Username, d.Password, d.Host, d.Port, d.Database, strings.ReplaceAll(d.TimeZone, "/", "%2F"))
 	default:
 		return ""
 	}
@@ -82,6 +90,19 @@ func Init(configPath string) error {
 	GlobalConfig = &Config{}
 	if err := yaml.Unmarshal(data, GlobalConfig); err != nil {
 		return fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	if GlobalConfig.Server.Port == 0 {
+		GlobalConfig.Server.Port = 8080
+	}
+	if GlobalConfig.Server.Mode == "" {
+		GlobalConfig.Server.Mode = "release"
+	}
+	if GlobalConfig.Server.RequestTimeout <= 0 {
+		GlobalConfig.Server.RequestTimeout = 30
+	}
+	if len(GlobalConfig.Server.AllowedOrigins) == 0 {
+		GlobalConfig.Server.AllowedOrigins = []string{"*"}
 	}
 
 	return nil

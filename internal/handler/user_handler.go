@@ -3,9 +3,9 @@ package handler
 import (
 	"strconv"
 
-	"go_basic_framework_template/internal/middleware"
-	"go_basic_framework_template/internal/response"
-	"go_basic_framework_template/internal/service"
+	"go-gin-starter/internal/middleware"
+	"go-gin-starter/internal/response"
+	"go-gin-starter/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

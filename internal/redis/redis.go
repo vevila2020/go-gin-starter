@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"go_basic_framework_template/internal/config"
-	"go_basic_framework_template/internal/logger"
+	"go-gin-starter/internal/config"
+	"go-gin-starter/internal/logger"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"

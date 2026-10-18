@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"go_basic_framework_template/internal/model"
-	"go_basic_framework_template/internal/repository"
+	"go-gin-starter/internal/model"
+	"go-gin-starter/internal/repository"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -37,20 +40,31 @@ type UserListRequest struct {
 }
 
 func (s *UserService) Create(ctx context.Context, req *CreateUserRequest) (*model.User, error) {
-	existingUser, _ := s.repo.GetByUsername(ctx, req.Username)
-	if existingUser != nil {
+	existingUser, err := s.repo.GetByUsername(ctx, req.Username)
+	if err == nil && existingUser != nil {
 		return nil, errors.New("username already exists")
 	}
+	if err != nil && !errors.Is(err, repository.ErrDatabaseDisabled) && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
 
-	existingEmail, _ := s.repo.GetByEmail(ctx, req.Email)
-	if existingEmail != nil {
+	existingEmail, err := s.repo.GetByEmail(ctx, req.Email)
+	if err == nil && existingEmail != nil {
 		return nil, errors.New("email already exists")
+	}
+	if err != nil && !errors.Is(err, repository.ErrDatabaseDisabled) && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.New("failed to hash password")
 	}
 
 	user := &model.User{
 		Username: req.Username,
 		Email:    req.Email,
-		Password: req.Password,
+		Password: string(hashed),
 		Nickname: req.Nickname,
 		Status:   1,
 	}

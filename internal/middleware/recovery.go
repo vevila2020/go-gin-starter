@@ -3,8 +3,8 @@ package middleware
 import (
 	"runtime/debug"
 
-	"go_basic_framework_template/internal/logger"
-	"go_basic_framework_template/internal/response"
+	"go-gin-starter/internal/logger"
+	"go-gin-starter/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

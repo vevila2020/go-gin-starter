@@ -1,8 +1,11 @@
 package router
 
 import (
-	"go_basic_framework_template/internal/handler"
-	"go_basic_framework_template/internal/middleware"
+	"time"
+
+	"go-gin-starter/internal/config"
+	"go-gin-starter/internal/handler"
+	"go-gin-starter/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,6 +14,12 @@ func Setup(r *gin.Engine) {
 	r.Use(middleware.CORS())
 	r.Use(middleware.Logger())
 	r.Use(middleware.Recovery())
+
+	timeout := 30 * time.Second
+	if cfg := config.GetConfig(); cfg != nil && cfg.Server.RequestTimeout > 0 {
+		timeout = time.Duration(cfg.Server.RequestTimeout) * time.Second
+	}
+	r.Use(middleware.Timeout(timeout))
 
 	healthHandler := handler.NewHealthHandler()
 	r.GET("/health", healthHandler.Health)

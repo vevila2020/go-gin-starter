@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go_basic_framework_template/internal/response"
+	"go-gin-starter/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

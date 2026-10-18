@@ -1,16 +1,10 @@
 package middleware
 
 import (
-	"go_basic_framework_template/internal/response"
+	"go-gin-starter/internal/response"
 
 	"github.com/gin-gonic/gin"
 )
-
-func RateLimit(limit int, window int64) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next()
-	}
-}
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {

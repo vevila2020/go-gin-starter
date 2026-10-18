@@ -1,10 +1,12 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 
-	"go_basic_framework_template/internal/config"
-	"go_basic_framework_template/internal/logger"
+	"go-gin-starter/internal/config"
+	"go-gin-starter/internal/logger"
+	"go-gin-starter/internal/model"
 
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
@@ -15,6 +17,8 @@ import (
 
 var DB *gorm.DB
 
+var ErrDisabled = errors.New("database is disabled")
+
 func Init() error {
 	cfg := config.GetConfig()
 	if cfg == nil {
@@ -22,6 +26,11 @@ func Init() error {
 	}
 
 	dbCfg := cfg.Database
+
+	if !dbCfg.Enabled {
+		logger.Info("database is disabled, skipping initialization")
+		return nil
+	}
 
 	var dialector gorm.Dialector
 	switch dbCfg.Driver {
@@ -52,6 +61,12 @@ func Init() error {
 	sqlDB.SetMaxIdleConns(dbCfg.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(dbCfg.MaxOpenConns)
 
+	if dbCfg.AutoMigrate {
+		if err := db.AutoMigrate(&model.User{}); err != nil {
+			return fmt.Errorf("failed to auto migrate: %w", err)
+		}
+	}
+
 	DB = db
 
 	logger.Info("database connected successfully",
@@ -65,6 +80,10 @@ func Init() error {
 
 func GetDB() *gorm.DB {
 	return DB
+}
+
+func IsEnabled() bool {
+	return DB != nil
 }
 
 func Close() error {

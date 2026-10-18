@@ -1,46 +1,45 @@
-# Ignore build artifacts
+# Build artifacts
 /bin/
 /dist/
 
-# Ignore logs
+# Logs
 /logs/
 *.log
 
-# Ignore test artifacts
+# Test output
 /coverage.out
 /coverage.html
 
-# Ignore IDE files
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# Ignore OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Ignore environment files
+# Environment
 .env
 .env.local
 .env.*.local
 
-# Ignore temporary files
+# Temporary files
 /tmp/
 *.tmp
-*.temp
 
-# Ignore dependency directories
+# Vendor directory
 /vendor/
 
-# Ignore compiled files
+# Compiled binaries
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Ignore debug files
-debug
 __debug_bin*
+
+# Local config overrides
+config/config.local.yaml

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go_basic_framework_template/internal/config"
+	"go-gin-starter/internal/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
